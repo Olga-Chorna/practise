@@ -1,38 +1,65 @@
 import React from "react";
-import { useState, useEffect } from "react";
-// import styles from "./counter.module.scss";
+import { useState, useEffect, useReducer } from "react";
+import styles from "./Counter.module.css";
 import ShowResult from "../ShowResult";
 
-export default function Counter() {
+function reducer(state, action) {
+  switch (action.type) {
+    case 'додавання':
+      return {
+        ...action,
+        count: (state.count + action.step)
+      };
+    case 'віднімання':
+      return {
+        ...action,
+        count: (state.count - action.step)
+      };
+    default: throw new Error();
+  }
+}
 
-  const [counter, setCounter] = useState(0);
-  const [step, setStep] = useState(1);
+export default function Counter() {
+  const [state, dispatch] = useReducer(reducer, {
+    count: 0,
+    step: 1,
+    type: 'додавання'
+  });
+
   const [isRunning, setIsRunning] = useState(true);
   const [isDisabled, setIsDisabled] = useState(true);
-  const [mode, setMode] = useState('додавання');
+  const [duration, setDuration] = useState(15000);
+  const [durationCount, setDurationCount] = useState(0)
+  
   
 
   useEffect(() => {
-    console.log("Додано ефект")
     let timerId = null;
-   if(isRunning) {
-    timerId = setInterval(() => {
-      setCounter((prevCounter) => prevCounter + step)
-    }, 1000)
-   } else {
-    clearInterval(timerId);
-   }
+    console.log("Додано ефект")
+    console.log(durationCount);
+    console.log(duration);
+    console.log((durationCount === duration));
+    // Чому не зупиняється таймер?
+
+    if(isRunning && (durationCount !== duration)) {
+      
+      timerId = setInterval(() => {
+        const action = {
+          ...state
+        }
+        dispatch(action);
+        setDurationCount((prev) => prev +=1000);
+      }, 1000)
+    } else {
+      clearInterval(timerId);
+    }
 
     return () => {
       clearInterval(timerId);
       console.log("Видалено ефект")
     }
-  },[step, isRunning]);
+  },[state.step, isRunning, state.type, duration, durationCount]);
 
-  const handlerCounterStepChange = ( {target} ) => {
-    const newStep = Number(target.value);
-    setStep(newStep);
-  };
 
   const handlerStop = () => {
     setIsRunning(false);
@@ -40,30 +67,97 @@ export default function Counter() {
   }
 
   const hahdlerStart =() => {
-    setCounter(0);
+    const action = {
+      ...state,
+      counter: 0
+    }
+    dispatch(action);
     setIsRunning(true);
     setIsDisabled(true);
   }
 
+  const handlerCounterStepChange = ( {target} ) => {
+    const newStep = Number(target.value);
+    const action = {
+      ...state,
+      count: 0,
+      step: newStep
+    }
+   dispatch(action);
+  };
+
   const handlerModeChahge = ({ target }) => {
-    setMode(target.value);
+    const action = {
+      ...state,
+      type: target.value,
+    }; 
+    // setMode(target.value);
+    dispatch(action);
   }
 
+  const handlerCounterDurationChange = ( {target} ) => {
+    const newTime = Number(target.value);
+    const TimeMs  = newTime * 1000;
+    const action = {
+      ...state,
+      count: 0
+    }
+   dispatch(action);
+   setDuration(TimeMs);
+   setIsRunning(false);
+   setIsDisabled(false);
+   setDurationCount(0);
+   
+  };
+
+
   return (
-    <div>
-      <div>
-        <h2>Counter</h2>
-        <button disabled={isDisabled} onClick={hahdlerStart}>{mode}</button>
-        <button onClick={handlerStop}>Зупинити</button>
+    <div className={styles.wrapper}>
+      <div className={styles.container}>
+        <h2 className={styles.heading}>Counter</h2>
+        <div className={styles.group}>
+          <button className={styles.group_button}
+                  disabled={isDisabled} 
+                  onClick={hahdlerStart}
+          >
+            {state.type}
+          </button>
+          <button className={styles.group_button}
+                  onClick={handlerStop}>
+                    зупинити
+          </button>
+        </div>
+       <div className={styles.group}>
+        <label className={styles.group_label} for="counterStep">Оберіть крок лічильника:</label>
         <input type="number" 
-               name='counterStep'
-                value={step} 
-                onChange={handlerCounterStepChange}></input>
-        <select name='counterMode' value={mode} onChange={handlerModeChahge}>
+                name='counterStep'
+                value={state.step} 
+                onChange={handlerCounterStepChange}
+                className={styles.group_input}>
+        </input>
+       </div>
+       <div className={styles.group}>
+       <label className={styles.group_label} for="counterMode">Оберіть режим лічильника:</label>
+        <select name='counterMode' 
+                value={state.type} 
+                onChange={handlerModeChahge}
+                className={styles.group_input}
+        >
           <option value='додавання'>додавання</option>
           <option value='віднімання'>віднімання</option>
         </select>
-        <ShowResult result={counter}/>
+       </div>
+       <div className={styles.group}>
+       <label className={styles.group_label} for="counterDuration">Оберіть час дії лічильника:</label>
+        <input type="number" 
+               name='counterDuration'
+               value={duration/1000} 
+               onChange={handlerCounterDurationChange}
+               className={styles.group_input}>
+        </input>
+       </div>
+       <div className={styles.group}></div>
+        <ShowResult result={state.count}/>
       </div>
     </div>
   )
