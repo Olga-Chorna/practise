@@ -35,11 +35,7 @@ export default function Counter() {
 
   useEffect(() => {
     let timerId = null;
-    console.log("Додано ефект")
-    console.log(durationCount);
-    console.log(duration);
-    console.log((durationCount === duration));
-    // Чому не зупиняється таймер?
+    console.log("Додано ефект");
 
     if(isRunning && (durationCount !== duration)) {
       
@@ -64,12 +60,19 @@ export default function Counter() {
   const handlerStop = () => {
     setIsRunning(false);
     setIsDisabled(false);
+
+    const action = {
+      ...state,
+      count: 0
+    }
+
+    dispatch(action);
   }
 
   const hahdlerStart =() => {
     const action = {
       ...state,
-      counter: 0
+      count: 0
     }
     dispatch(action);
     setIsRunning(true);
@@ -107,7 +110,6 @@ export default function Counter() {
    setIsRunning(false);
    setIsDisabled(false);
    setDurationCount(0);
-   
   };
 
 
